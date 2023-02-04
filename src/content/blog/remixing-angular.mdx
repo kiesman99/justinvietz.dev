@@ -259,7 +259,7 @@ Whenever you decide to change a parameters name the typesafety inside the `resol
 Sometimes requests take a while. Say we want to load all the user posts but the request takes 5 seconds. That's a long long time. Fortunately we can wrap an observable we expect to be long loading inside of the `deferred` utility function. Doing so will leave the inner observable untouched until it is manually subscribed in the component (therefore after everything else has been loaded). This way you could define both the fast and the slow api request in `createPageResolver` and just consume the data respectively when needed. One bonus is that `deferred(obs: Observable<T>)` will wrap the inner observable into a *loading state object* similar to a query in [ngneat@query](https://github.com/ngneat/query) (inspired by [Tanstack-query](https://tanstack.com/query/latest)).
 
 <Collapsible title="Preview">
-    <video autoplay controls loop src="/blog/remixing-angular/long-loading.webm"></video>
+    <video autoplay controls loop src="/justinvietz.dev/blog/remixing-angular/long-loading.webm"></video>
 </Collapsible>
 
  ```ts
@@ -313,7 +313,7 @@ export class PageResolverLongLoadingComponent {
 Rendering the page as soon (or as late) as every needed data has been loaded means the page will look very unresponsive if you click on a link. That is not exactly the behaviour we want for our users. There should be a way to tell something is loading. Luckily it's fairly easy to implement something like that usting `injectPageLoaderStatus`. This utility function wraps router events like [ResolveStart](https://angular.io/api/router/ResolveStart) sent by angular [^2] to determine the page reloaders status and emits `'idle' | 'submitting' | 'loading'`. This can be used to build a simple progress bar at the top of the page:
 
 <Collapsible title="Preview">
-    <video autoplay controls loop src="/blog/remixing-angular/loading-indicator.webm"></video>
+    <video autoplay controls loop src="/justinvietz.dev/blog/remixing-angular/loading-indicator.webm"></video>
 </Collapsible>
 
 ```ts
@@ -365,7 +365,7 @@ export class LoadingIndicatorComponent {
 ## Refreshing Resolver data
 
 <Collapsible title="Preview">
-    <video autoplay controls loop src="/blog/remixing-angular/reload.webm"></video>
+    <video autoplay controls loop src="/justinvietz.dev/blog/remixing-angular/reload.webm"></video>
 </Collapsible>
 
 What about data that needs to be refreshed afterwards? No Problem! Just tell the router configuration when it should reload the resolver [^3]. For this example we pick `'always'` to ensure the resolvers get reloaded whenever the same page is requested. We also need to tell angular to allow same-url-navigation [^4] to ensure a same page refresh will trigger the resolvers.
