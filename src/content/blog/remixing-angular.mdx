@@ -1,0 +1,514 @@
+---
+title: "Remixing Angular"
+description: ""
+pubDate: "Feb 03 2022"
+# heroImage: "/placeholder-hero.jpg"
+---
+import Collapsible from '../../components/mdx-helper/Collapsible.astro';
+
+## TODO
+
+- [ ] Replace code samples with project ones
+- [ ] Create Stackblitz for sample
+- [x] Make library from createPageResolver
+- [x] consume cpr lib in example
+- [x] Refreshing Resolver Data
+- [x] Caching
+- [ ] Future
+- [ ] Use markdown footnotes insead of references
+- [ ] proof read nicolas
+- [x] WIP banner to blog
+
+Recently I've been looking at some frameworks and one concept really stuck to me. I am speaking of the [Data flow in RemixJS](https://remix.run/blog/remix-data-flow) [^1]. Of course, I would advise you to read the article posted on the [RemixJs Blog](https://remix.run/blog/remix-data-flow) but i'll do my best to give you a very short introduction (Please excuse me if I miss something). If you are not interested in the "short" explanation you can skip right ahead to the [createPageResolver](#createpageresolver) section in which i introduce a library for angular to use a similar pattern.
+
+## Loaders
+
+In [RemixJS](https://remix.run/) you define a loader which describes all the data needed for the page you want to render. It could look something like this:
+
+```ts
+export const loader = async ({params}: LoaderArgs) => {
+    const userId = params.userId;
+    const postsService = getPostsService();
+    const profileService = getProfileService();
+
+    const posts = postsService.getUserPosts(userId);
+    const profileInfo = profileService.getProfileInfo(userId);
+
+    return {
+        // posts: Promise<Post[]>
+        posts: await posts,
+        // ProfileInfo: Promise<ProfileInfo>
+        profileInfo: await profileInfo
+    };
+} 
+```
+This loader is picked up automatically by remix and does not need to be registered somewhere (Remix uses file based routing and therefore knows that the loader will belong to the page it's created in). The loader will be executed before the page is actually shown and ensures that all needed data is available when the page is rendered (one big thing to note here should be that Remix does Server Side Rendering and therefore executes the `loader` method on the server and not on the client). Remix does provide you a `useLoaderData` hook which will give you access to the loader's data inside of the react component.
+
+```tsx
+export default function SamplePage() {
+    // data: { posts: Post[], profileInfo: ProfileInfo }
+    const data = useLoaderData<typeof loader>(); 
+
+    return <>
+        <p>Welcome {data.profileInfo.username}</p>
+        {data.posts.map(post => (<Post post={post} />))}
+    </>
+}
+```
+
+As you can see `data` gets it's type from the `loader`'s return type and is therefore typesafe. It is really easy and straight foreward to set up data that should be loaded in Remix and duo to the typesafety makes a lot of fun. Most of you will probably think "This sounds like resolvers in angular!" and that's kind of true. In Angular you can set up [resolvers](https://angular.io/api/router/Resolve) which will, similar to remix's loaders, execute before an angular component renders and therefore ensures that the data is loaded when the page is rendered. But i would not write this article if I'd think angular resolvers are flawless...
+
+## Registering Resolvers
+
+Angular does not use file based routing but instead has a router configuration in which the resolvers for each page have to be registered. Each route in the angular router has the option to pass an optional object to the `resolve` key:
+
+```ts
+export const angularResolverRoutes: Routes = [
+    {
+        path: 'profile/:userId',
+        resolve: {
+            posts: (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+                return inject(PostsService).getUserPosts(route.params['userId']);
+            },
+            profileInfo: (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+                return inject(ProfileService).getProfileInfo(route.params['userId']);
+            }
+        },
+        component: AngularResolverComponent
+    }
+];
+```
+
+<Collapsible title="Resolver as a function?">
+You might alread know the [Resolve](https://angular.io/api/router/Resolve) interface which could be used to create a resolver but it is also possible to use a [ResolveFn](https://angular.io/api/router/ResolveFn) for that task. With the introduction of the [inject](https://angular.io/api/core/testing/inject) function this is (IMO) a more elegant way to define a resolver. It is also not required to define the Resolver right into the route. You could define it elsewhere and just reference it in the route you want the data to be loaded.
+</Collapsible>
+
+So far so good, looks very similar, now let us get the data in the Angular component:
+
+```ts
+@Component({
+  selector: 'app-angular-resolver',
+  standalone: true,
+  imports: [CommonModule, PostComponent],
+  template: `
+    <h1>Angular Resolver</h1>
+    <p>Welcome {{data['profileInfo'].username}}</p>
+    <app-post *ngFor="let post of data['posts']" [post]="post"/>
+  `,
+})
+export class AngularResolverComponent {
+  route = inject(ActivatedRoute);
+  data = this.route.snapshot.data;
+}
+```
+
+Mh but now we have a problem. `route.snapshot.data` has the [following type definition](https://github.com/angular/angular/blob/main/packages/router/src/models.ts#L118):
+
+```ts
+export declare type Data = {
+    [key: string | symbol]: any;
+};
+```
+
+Therefore we loose all typesafety of the resolvers we have registered for the route. Thats because Angular does not know which `route.snapshot.data` you are getting, it just knows that you will be getting some. A solution here would be to construct a similar structure as in Remix by defining the needed resolver in the component that will display the page and cast `route.snapshot.data['keyOfRouterDefinition']` to the desired type:
+
+```ts
+// angular-resolver-inline.component.ts
+interface AngularInlineResolverData {
+  posts: Post[];
+  profileInfo: ProfileInfo;
+};
+
+export const angularInlineResolver: ResolveFn<AngularInlineResolverData> = (route, state) => {
+  const userId = route.params['userId'];
+
+  const profileService = inject(ProfileService);
+  const postsService = inject(PostsService);
+
+  const profileInfo$ = profileService.getProfileInfo(userId);
+  const posts$ = postsService.getUserPosts(userId);
+
+  return forkJoin({
+    posts: posts$,
+    profileInfo: profileInfo$,
+  });
+};
+
+@Component({
+  selector: 'app-angular-resolver-inline',
+  standalone: true,
+  imports: [CommonModule, PostComponent],
+  template: `
+    <h1>Angular Resolver Inline</h1>
+    <p>Welcome {{data.profileInfo.username}}</p>
+    <app-post *ngFor="let post of data.posts" [post]="post"/>
+  `,
+  styles: [
+  ]
+})
+export class AngularResolverInlineComponent {
+  route = inject(ActivatedRoute);
+  data = this.route.snapshot.data['payload'] as AngularInlineResolverData;
+}
+```
+
+```ts
+// routes.ts
+export const angularResolverInlineRoutes: Routes = [
+    {
+        path: 'profile/:userId',
+        resolve: {
+            payload: angularInlineResolver
+        },
+        component: AngularResolverInlineComponent,
+    }
+];
+```
+That is a bit better as we now can cast `this.route.snapshot.data['payload']` to our defined `AngularInlineResolverData` object.
+
+<Collapsible title="Why define ResolveData and not infer it?">
+    Yeah... `ResolveFn<T>` needs a generic type `T`. Without it, the linter will yell at you to provide some type information. This is totally fine, but if you compare the Remix approach and the Angular approach these differ in boilerplate a lot and we're still not ready.
+</Collapsible>
+
+But what's that? `router.data` now needs to access `['payload']` which is the key of the [ResolveData](https://github.com/angular/angular/blob/main/packages/router/src/models.ts#L130) object Angular requires to define a route. We now ensure that `data = this.route.snapshot.data['payload']` is typesafe, because of our self ensured cast, but the `data` property of `router.snapshot` is still of type `[key: string]: any`. This is bad because now I have to ensure, that everytime i hook up a resolver in the router I need to assign my resolver to the `payload` key to make it working the same in every Angular Page. There has to be some better way to do this (And there is).
+
+## createPageResolver
+
+Can i introduce you to `createPageResolver`? We will use it to define typesafe resolvers and sprinkle in some magic with parameters (you'll see it's awesome!). Let's re-define the resolver from the section above with `createPageResolver`:
+
+```ts
+export const {
+  samplePageResolver,
+  injectSamplePageResolverData,
+} = createPageResolver({
+  name: 'sample',
+  resolveFn: ({route}) => {
+    const userId = route.params['userId'];
+
+    const profileService = inject(ProfileService);
+    const postsService = inject(PostsService);
+  
+    const profileInfo$ = profileService.getProfileInfo(userId);
+    const posts$ = postsService.getUserPosts(userId);
+  
+    return forkJoin({
+      posts: posts$,
+      profileInfo: profileInfo$,
+    });
+  }
+}); 
+```
+
+`createPageResolver` will take a configuration object which in turn needs a `name` and a `resolveFn`. The `name` will dynamically determine the exported variables and the `resolveFn` has to return an `Observable<T extends object>`. You might have noticed that the code inside of the `resolveFn` is the same as the 'normal' resolver definition but you do not need to provide the return type of the `resolveFn` as we've seen in Angular's `ResolveFn<T>`. `createPageResolver` will return the actual Resolver `samplePageResolver` which needs to be registered in the route path and `injectSamplePageResolverData` which can be used to inject the data that has been resolved by the resolver into the angular component:
+
+```ts
+@Component({
+  selector: 'app-page-resolver',
+  standalone: true,
+  imports: [CommonModule, PostComponent],
+  template: `
+    <h1>Page Resolver</h1>
+    <p>Welcome {{rd.profileInfo.username}}</p>
+    <app-post *ngFor="let post of rd.posts" [post]="post"/>
+  `,
+  styles: [
+  ]
+})
+export class PageResolverComponent {
+  // shorthand for resolverData
+  rd = injectSamplePageResolverData();
+}
+```
+
+As you can see we just inject our defined route data via the created `injectSamplePageResolverData` function into the component. `rd` is fully typed and can be easily used inside of the component. There is no need to *know* which key the resolver data is mapped to. Everything is standartized and handled by `createPageResolver`. Isn't this awesome? We just define our *page resolver* and use it. Yeah of course there still are some small hick ups like route params. 
+
+## Route params
+
+In a real world app we'd like to ensure that the parameter `userId` really exists or matches some schema. This would really fast increase the size of the resolver and still leaves us with no typed `route.params`. One difference between the `ResolveFn<T>` of Angular and the `resolveFn` of our `createPageResolver` is the argument the function takes. `ResolveFn<T>` takes `(route: ActivatedRouteSnapshot, state: RouterStateSnapshot)` but `resolveFn` will take an object that you can deconstruct. One benefit is that you can take what you need (just deconstruct the `route` parameter if you need access to the `ActivatedRouteSnapshot`) but the object provides some nice shortcuts. You can for example deconstruct the `params` parameter to gain access to `route.params` (this is just a simple mapping). Rightly so you'll ask what's the benefit. You can optionally define a [zod](https://github.com/colinhacks/zod) schema inside of `createPageResolver` which will define the parameters you are expecting. If you decide to provide such a schema, `createPageResolver` will parse `route.params` against this schmema and enhances `params` with the types of the zod schema:
+
+```ts
+export const {
+  sampleWithParamsSchemaPageResolver,
+  injectSampleWithParamsSchemaPageResolverData,
+} = createPageResolver({
+  name: 'sampleWithParamsSchema',
+  paramsSchema: z.object({
+    userId: z.string(),
+  }),
+  resolveFn: ({params}) => {
+    const { userId } = params;
+
+    const profileService = inject(ProfileService);
+    const postsService = inject(PostsService);
+  
+    const profileInfo$ = profileService.getProfileInfo(userId);
+    const posts$ = postsService.getUserPosts(userId);
+  
+    return forkJoin({
+      posts: posts$,
+      profileInfo: profileInfo$,
+    });
+  }
+}); 
+```
+
+Whenever you decide to change a parameters name the typesafety inside the `resolveFn` will tell you that something is wrong. One more benefit is that every parameter up to the root is included in `params` and validated against the schema. Therefore if you have nested routes which have some parameter you'll gain access to them too. The same can be dome with queryParams via providing a `queryParamsSchema`. 
+
+## Long Loading
+
+Sometimes requests take a while. Say we want to load all the user posts but the request takes 5 seconds. That's a long long time. Fortunately we can wrap an observable we expect to be long loading inside of the `deferred` utility function. Doing so will leave the inner observable untouched until it is manually subscribed in the component (therefore after everything else has been loaded). This way you could define both the fast and the slow api request in `createPageResolver` and just consume the data respectively when needed. One bonus is that `deferred(obs: Observable<T>)` will wrap the inner observable into a *loading state object* similar to a query in [ngneat@query](https://github.com/ngneat/query) (inspired by [Tanstack-query](https://tanstack.com/query/latest)).
+
+<Collapsible title="Preview">
+    <video autoplay controls loop src="/blog/remixing-angular/long-loading.webm"></video>
+</Collapsible>
+
+ ```ts
+ export const {
+  longLoadingPageResolver,
+  injectLongLoadingPageResolverData,
+} = createPageResolver({
+  name: 'longLoading',
+  paramsSchema: z.object({
+    userId: z.string(),
+  }),
+  resolveFn: ({params}) => {
+    const { userId } = params;
+
+    const profileService = inject(ProfileService);
+    const postsService = inject(PostsService);
+  
+    const profileInfo$ = profileService.getProfileInfo(userId);
+    const longLoadingPosts$ = postsService.getLongLoadingPosts(userId);
+  
+    return forkJoin({
+      longLoadingPosts$: deferred(longLoadingPosts$),
+      profileInfo: profileInfo$,
+    });
+  }
+}); 
+
+@Component({
+  selector: 'app-page-resolver-long-loading',
+  standalone: true,
+  imports: [CommonModule, PostComponent],
+  template: `
+    <h1>Page Resolver long loading</h1>
+    <p>Welcome {{rd.profileInfo.username}}</p>
+    <ng-container *ngIf="rd.longLoadingPosts$ | async as postsLoader">
+      <p *ngIf="postsLoader.isLoading">Loading...</p>
+      <p *ngIf="postsLoader.error">Ups. something wrong happened</p>
+      <app-post *ngFor="let post of postsLoader.data" [post]="post"/>
+    </ng-container>
+  `,
+  styles: [
+  ]
+})
+export class PageResolverLongLoadingComponent {
+  rd = injectLongLoadingPageResolverData();
+}
+ ```
+
+## Loading indicator
+
+Rendering the page as soon (or as late) as every needed data has been loaded means the page will look very unresponsive if you click on a link. That is not exactly the behaviour we want for our users. There should be a way to tell something is loading. Luckily it's fairly easy to implement something like that usting `injectPageLoaderStatus`. This utility function wraps router events like [ResolveStart](https://angular.io/api/router/ResolveStart) sent by angular [^2] to determine the page reloaders status and emits `'idle' | 'submitting' | 'loading'`. This can be used to build a simple progress bar at the top of the page:
+
+<Collapsible title="Preview">
+    <video autoplay controls loop src="/blog/remixing-angular/loading-indicator.webm"></video>
+</Collapsible>
+
+```ts
+@Component({
+  selector: 'app-loading-indicator',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="loader-bg">
+      <div
+        *ngIf="width$ | async as width"
+        class="loader"
+        style="width: {{ width }}%"
+      ></div>
+    </div>
+  `,
+  styles: [
+    `
+      .loader-bg {
+        width: 100%;
+        height: 5px;
+        background-color: rgba(0, 114, 152, 0.5);
+      }
+      .loader {
+        width: 100%;
+        height: 5px;
+        background-color: rgba(0, 114, 152, 1);
+      }
+    `,
+  ],
+})
+export class LoadingIndicatorComponent {
+
+  width$ = injectPageLoaderStatus().pipe(
+    map((status) => {
+      switch (status) {
+        case 'loading':
+          return 50;
+        case 'submitting':
+          return 25;
+        default:
+          return 100;
+      }
+    })
+  );
+}
+```
+
+## Refreshing Resolver data
+
+<Collapsible title="Preview">
+    <video autoplay controls loop src="/blog/remixing-angular/reload.webm"></video>
+</Collapsible>
+
+What about data that needs to be refreshed afterwards? No Problem! Just tell the router configuration when it should reload the resolver [^3]. For this example we pick `'always'` to ensure the resolvers get reloaded whenever the same page is requested. We also need to tell angular to allow same-url-navigation [^4] to ensure a same page refresh will trigger the resolvers.
+ 
+<Collapsible title="onSameUrlNavigation configuration">
+```ts
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideRouter(routes, withRouterConfig({
+      onSameUrlNavigation: 'reload'
+    })),
+    providePageResolver()
+  ],
+});
+```
+</Collapsible>
+
+```ts
+// routes.ts
+export const pageResolverReloadRoutes: Routes = [
+    {
+        path: 'posts/:userId',
+        resolve: sampleReloadPageResolver,
+        runGuardsAndResolvers: 'always',
+        component: PageResolverReloadComponent
+    }
+];
+```
+```ts
+// page-resolver-reload.component
+export const { 
+  sampleReloadPageResolver, 
+  injectSampleReloadPageResolverData$ 
+} =
+  createPageResolver({
+    name: 'sampleReload',
+    paramsSchema: z.object({
+      userId: z.string(),
+    }),
+    resolveFn: ({ params }) => {
+      console.log('resolvin', 'sampleReload');
+      const { userId } = params;
+      const postsService = inject(PostsService);
+
+      const posts$ = postsService.getUserPosts(userId);
+
+      return forkJoin({
+        posts: posts$,
+      });
+    },
+  });
+
+@Component({
+  selector: 'app-page-resolver-reload',
+  standalone: true,
+  template: `
+    <ng-container *ngIf="state$ | async as state">
+      <ng-container *ngIf="rd$ | async as rd">
+        <h1>Page Resolver reload</h1>
+        <form #addPost="ngForm" (ngSubmit)="submit(addPost)">
+          <input 
+            type="text" 
+            name="title" 
+            [disabled]="state !== 'idle'"
+            placeholder="Title" 
+            [(ngModel)]="newPost.title" 
+            required/>
+          <br />
+          <textarea 
+            name="content"
+            [disabled]="state !== 'idle'"
+            cols="30" 
+            rows="10" 
+            placeholder="Content" 
+            [(ngModel)]="newPost.content" 
+            required></textarea>
+          <br />
+          <button type="submit" [disabled]="state !== 'idle'">Add</button>
+        </form>
+        <hr>
+        <h2>Posts</h2>
+        <app-post *ngFor="let post of rd.posts" [post]="post"/>
+      </ng-container>
+    </ng-container>
+  `,
+  styles: [],
+  imports: [CommonModule, FormsModule, PostComponent],
+})
+export class PageResolverReloadComponent {
+  private readonly router = inject(Router);
+  private readonly postsService = inject(PostsService);
+  private readonly aw = injectActionWatcher();
+  readonly rd$ = injectSampleReloadPageResolverData$();
+  readonly state$ = injectPageLoaderStatus();
+
+  newPost: Post = {
+    title: '',
+    content: '',
+  };
+
+  submit(ngForm: NgForm) {
+    const form = ngForm.form;
+    if (form.invalid) {
+      alert('Please fill all fields');
+      return;
+    }
+
+    this.postsService
+      .addPost(this.newPost)
+      .pipe(this.aw.watchAction())
+      .subscribe((post) => {
+        this.router.navigate([]);
+      });
+  }
+}
+```
+
+### injectSampleReloadPageResolverData$
+
+Actually the `createPageResolver` function will export two inject functions for the resolver data. One snapshot, which is not updated and an observable of the `createPageResolver`-data, indicated by the `$` at the end of `<ng-container *ngIf="rd$ | async as rd">`. This specialized injection function can be used to keep track of the latest resolved data of the resolver. For easy access to the resolver data we wrap the whole page in an `<ng-container *ngIf="rd$ | async as rd"></ng-container>` and we're ready to use `rd` again!
+
+### Disbale form when loading
+
+We don't want the user to add more posts while the last submit is still pending or the data reloads. That's why we can inject the *status* via `injectPageLoaderStatus()` and just disable the formfields when the state is not 'idle'.
+
+## Caching
+
+Reloading the data every time could use up a lot of bandwidth but also will make the application feel slow. That is why we want to cache as much requests as possible. How you do this is not handled in `ngx-page-resolver` but you could use libraries like [cashew](https://github.com/ngneat/cashew). Using such a library the posts for example could always be stored for 10 seconds. After that period of time you would request the data again from your backend and the data is fresh again.
+
+## Future
+
+- wrapping router api
+    - read parameters from provided path
+    - use parsed paths in `[routerLink]`
+    - look at tanstack router
+
+## Acknoledgements
+
+- [Remix Router in Angular](https://dev.to/brandontroberts/remix-ing-routing-in-angular-4g90)
+- [Remix loading indicator](https://dev.to/gugaguichard/add-a-global-progress-indicator-to-your-remix-app-2m52)
+
+[^1]: https://dev.to/brandontroberts/remix-ing-routing-in-angular-4g90
+[^2]: https://angular.io/api/router/Event
+[^3]: https://angular.io/api/router/RunGuardsAndResolvers
+[^4]: https://angular.io/api/router/OnSameUrlNavigation
+[^5]: https://angular.io/api/router/ActivatedRoute#data
