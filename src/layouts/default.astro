@@ -21,9 +21,9 @@ const { title, description } = Astro.props;
     </style>
     <ThemeProvider />
   </head>
-  <body class="dark:bg-black">
+  <body class="bg-gray-100 dark:bg-gray-900">
     <Header />
-    <main class="container mx-auto p-5">
+    <main class="container mx-auto p-5 dark:invert">
       <slot />
     </main>
     <Footer />
