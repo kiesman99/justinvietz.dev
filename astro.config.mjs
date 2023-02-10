@@ -6,8 +6,11 @@ import sitemap from '@astrojs/sitemap';
 import react from "@astrojs/react";
 
 // https://astro.build/config
+import tailwind from "@astrojs/tailwind";
+
+// https://astro.build/config
 export default defineConfig({
   site: 'https://kiesman99.github.io',
   base: '/justinvietz.dev',
-  integrations: [mdx(), sitemap(), react()]
+  integrations: [mdx(), sitemap(), react(), tailwind()]
 });

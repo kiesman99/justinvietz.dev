@@ -4,21 +4,10 @@ description: ""
 pubDate: "Feb 03 2022"
 # heroImage: "/placeholder-hero.jpg"
 ---
+import { Code } from 'astro/components';
 import {BASE} from '../../consts.ts';
 import Collapsible from '../../components/mdx-helper/Collapsible.astro';
-
-## TODO
-
-- [ ] Replace code samples with project ones
-- [ ] Create Stackblitz for sample
-- [x] Make library from createPageResolver
-- [x] consume cpr lib in example
-- [x] Refreshing Resolver Data
-- [x] Caching
-- [ ] Future
-- [ ] Use markdown footnotes insead of references
-- [ ] proof read nicolas
-- [x] WIP banner to blog
+import GitRaw from '../../components/GitRaw.astro';
 
 Recently I've been looking at some frameworks and one concept really stuck to me. I am speaking of the [Data flow in RemixJS](https://remix.run/blog/remix-data-flow) [^1]. Of course, I would advise you to read the article posted on the [RemixJs Blog](https://remix.run/blog/remix-data-flow) but i'll do my best to give you a very short introduction (Please excuse me if I miss something). If you are not interested in the "short" explanation you can skip right ahead to the [createPageResolver](#createpageresolver) section in which i introduce a library for angular to use a similar pattern.
 

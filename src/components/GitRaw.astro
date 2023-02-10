@@ -1,0 +1,23 @@
+---
+import { Code } from 'astro/components';
+import type { Lang, ILanguageRegistration } from 'shiki';
+
+interface Props {
+    lang: Lang | ILanguageRegistration | undefined;
+    uri: string;
+}
+
+const { lang, uri } = Astro.props;
+
+let rawUri = uri;
+if (!uri.includes('raw.githubusercontent.com')) {
+    rawUri = uri.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/");
+}
+
+
+const res = await fetch(rawUri);
+const text = await res.text();
+---
+
+<Code lang={lang} code={text} />
+<a href={uri} target="_blank">GitHub 🔗</a>
