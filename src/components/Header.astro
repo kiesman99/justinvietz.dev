@@ -1,7 +1,8 @@
 ---
 import HeaderLink from "./HeaderLink.astro";
 import { SITE_TITLE } from "../consts";
-import ThemeSwitcher from "./ThemeSwitcher";
+// import ThemeSwitcher from "./ThemeSwitcher";
+import ThemeSwitcher from "./ThemeSwitcher.svelte";
 ---
 
 <header
@@ -11,7 +12,7 @@ import ThemeSwitcher from "./ThemeSwitcher";
     <h2 class="text-3xl dark:text-white">
       {SITE_TITLE}
     </h2>
-    <ThemeSwitcher client:only="react"/>
+    <ThemeSwitcher client:only="svelte"/>
   </span>
   <nav class="flex flex-row gap-3">
     <HeaderLink href={`/`}>Home</HeaderLink>

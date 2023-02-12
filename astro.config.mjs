@@ -12,10 +12,13 @@ import tailwind from "@astrojs/tailwind";
 import vercel from '@astrojs/vercel/static';
 
 // https://astro.build/config
+import svelte from "@astrojs/svelte";
+
+// https://astro.build/config
 export default defineConfig({
   site: 'https://justinvietz.dev',
   // base: '/justinvietz.dev',
-  integrations: [mdx(), sitemap(), react(), tailwind()],
+  integrations: [mdx(), sitemap(), react(), tailwind(), svelte()],
   output: "static",
   adapter: vercel({
     analytics: true
