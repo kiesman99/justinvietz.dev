@@ -4,6 +4,7 @@ import BaseHead from "../components/BaseHead.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import ThemeProvider from "./ThemeProvider.astro";
+import PostHeading from "@components/PostHeading.astro";
 
 type Props = CollectionEntry<"blog">["data"];
 
@@ -19,25 +20,16 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
   <body class="bg-gray-100 dark:bg-gray-900">
     <Header />
     <main class="container mx-auto p-5">
-      <article>
-        {
-          pubDate ? (
-            <p class="dark:text-white">
-              Published:{" "}
-              <time>{new Intl.DateTimeFormat("en-US").format(pubDate)}</time>
-            </p>
-          ) : null
-        }
-        {
-          updatedDate ? (
-            <div class="dark:text-white">
-              Last updated on <time>{updatedDate}</time>
-            </div>
-          ) : null
-        }
-        {heroImage && <img width={720} height={360} src={heroImage} alt="" />}
-        <h1 class="text-5xl mb-7 mt-2 dark:text-white">{title}</h1>
-        <div class="prose prose-gray dark:prose-invert prose-a:text-blue-500 hover:prose-a:text-blue-700">
+      <article class="flex flex-col ">
+        <PostHeading
+          title={title}
+          pubDate={pubDate}
+          updatedDate={updatedDate}
+          heroImage={heroImage}
+        />
+        <div
+          class="prose prose-gray dark:prose-invert prose-a:text-blue-500 hover:prose-a:text-blue-700"
+        >
           <slot />
         </div>
       </article>
@@ -45,3 +37,9 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
     <Footer />
   </body>
 </html>
+
+<style is:global>
+	section[data-footnotes] > ol > li > p > a {
+		@apply break-all;
+	}
+</style>

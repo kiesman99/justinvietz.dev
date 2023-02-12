@@ -1,34 +1,35 @@
 ---
-import DefaultLayout from '@layouts/default.astro';
-import BaseHead from '@components/BaseHead.astro';
-import Header from '@components/Header.astro';
-import Footer from '@components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION, BASE } from '../../consts';
-import { getCollection } from 'astro:content';
+import DefaultLayout from "@layouts/default.astro";
+import BaseHead from "@components/BaseHead.astro";
+import Header from "@components/Header.astro";
+import Footer from "@components/Footer.astro";
+import { SITE_TITLE, SITE_DESCRIPTION, BASE } from "../../consts";
+import { getCollection } from "astro:content";
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf()
+const posts = (await getCollection("blog")).sort(
+  (a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf()
 );
 ---
 
 <DefaultLayout title={SITE_TITLE} description={SITE_DESCRIPTION}>
-	<h1 class="text-4xl mb-1">articles</h1>
-	<section>
-		<ul class="flex flex-col">
-			{
-				posts.map((post) => (
-					<li>
-						<time datetime={post.data.pubDate.toISOString()}>
-							{post.data.pubDate.toLocaleDateString('en-us', {
-								year: 'numeric',
-								month: 'short',
-								day: 'numeric',
-							})}
-						</time>
-						<a href={`${BASE}/blog/${post.slug}/`}>{post.data.title}</a>
-					</li>
-				))
-			}
-		</ul>
-	</section>
+  <section>
+    <ul class="flex flex-col gap-4">
+      {
+        posts.map((post) => (
+          <li>
+            <a href={`${BASE}/blog/${post.slug}/`} class="flex flex-col">
+              <p class="text-2xl">{post.data.title}</p>
+              <time datetime={post.data.pubDate.toISOString()} class="text-sm">
+                {post.data.pubDate.toLocaleDateString("en-us", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </time>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
 </DefaultLayout>

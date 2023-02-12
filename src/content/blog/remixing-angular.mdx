@@ -100,7 +100,7 @@ export declare type Data = {
 };
 ```
 
-Therefore we loose all typesafety of the resolvers we have registered for the route. Thats because Angular does not know which `route.snapshot.data` you are getting, it just knows that you will be getting some. A solution here would be to construct a similar structure as in Remix by defining the needed resolver in the component that will display the page and cast `route.snapshot.data['keyOfRouterDefinition']` to the desired type:
+Therefore we loose all typesafety of the resolvers we have registered for the route. Thats because Angular does not know which `route.snapshot.data` you are getting, it just knows that you will be getting some. A solution here would be to construct a similar structure as in Remix by defining the needed resolver in the component that will display the page and cast `route.snapshot.data['key']` to the desired type:
 
 ```ts
 // angular-resolver-inline.component.ts
