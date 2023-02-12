@@ -1,6 +1,6 @@
 ---
 import HeaderLink from "./HeaderLink.astro";
-import { SITE_TITLE, BASE } from "../consts";
+import { SITE_TITLE } from "../consts";
 import ThemeSwitcher from "./ThemeSwitcher";
 ---
 
@@ -14,9 +14,9 @@ import ThemeSwitcher from "./ThemeSwitcher";
     <ThemeSwitcher client:only="react"/>
   </span>
   <nav class="flex flex-row gap-3">
-    <HeaderLink href={`${BASE}/`}>Home</HeaderLink>
-    <HeaderLink href={`${BASE}/blog`}>Blog</HeaderLink>
-    <HeaderLink href={`${import.meta.env.BASE_URL}rss.xml`}>RSS</HeaderLink>
+    <HeaderLink href={`/`}>Home</HeaderLink>
+    <HeaderLink href={`/blog`}>Blog</HeaderLink>
+    <HeaderLink href={`/rss.xml`}>RSS</HeaderLink>
     <HeaderLink href="https://twitter.com/kiesman99" target="_blank">
       Twitter
     </HeaderLink>

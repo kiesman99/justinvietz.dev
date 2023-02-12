@@ -3,4 +3,3 @@
 
 export const SITE_TITLE = 'justinvietz.dev';
 export const SITE_DESCRIPTION = 'Welcome to my website!';
-export const BASE = '/justinvietz.dev'

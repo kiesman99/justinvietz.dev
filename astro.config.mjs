@@ -10,7 +10,7 @@ import tailwind from "@astrojs/tailwind";
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://kiesman99.github.io',
-  base: '/justinvietz.dev',
-  integrations: [mdx(), sitemap(), react(), tailwind()]
+  site: 'https://justinvietz.dev',
+  // base: '/justinvietz.dev',
+  integrations: [mdx(), sitemap(), react(), tailwind()],
 });
