@@ -4,7 +4,8 @@
     export let updatedDate;
 </script>
 
-<span class="flex flex-col justify-center items-center my-5 md:my-20">
+<span class="flex flex-col justify-center items-center my-5 md:my-15">
+  <h1 class="text-center text-5xl mb-7 mt-2 dark:text-white">{title}</h1>
     {#if pubDate}
     <p class="dark:text-white">
         Published:{" "}
@@ -16,5 +17,4 @@
         Last updated on <time>{updatedDate}</time>
       </div>
     {/if}
-  <h1 class="text-center text-5xl mb-7 mt-2 dark:text-white">{title}</h1>
 </span>

@@ -1,0 +1,10 @@
+---
+const { title } = Astro.props;
+---
+
+<span class="flex flex-col justify-center items-center my-5 md:my-15">
+  <h1 class="text-center text-5xl mb-5 mt-2 dark:text-white">{title}</h1>
+  <span class="dark:text-white">
+    <slot />
+  </span>
+</span>

@@ -1,5 +1,4 @@
 <script>
-  import { getTheme } from "src/scripts/theme";
   import { onMount } from "svelte";
   import { Moon, Sun } from "lucide-svelte";
 
@@ -16,21 +15,26 @@
   $: {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
-    } else {
+      localStorage.setItem("theme", theme);
+    } else if (theme === "light") {
       document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", theme);
     }
-    localStorage.setItem("theme", theme);
   }
 
   onMount(() => {
-    theme = getTheme();
+    theme = localStorage.getItem("theme") ?? undefined;
   });
 </script>
 
-<button on:click={toggleTheme} class={`dark:text-white`}>
-  {#if theme === "dark"}
-    <Sun />
-  {:else if theme === "light"}
-    <Moon />
-  {/if}
-</button>
+{#if theme !== undefined}
+  <button on:click={toggleTheme} class={`dark:text-white`}>
+    {#if theme === "dark"}
+      <Sun />
+    {:else if theme === "light"}
+      <Moon />
+    {/if}
+  </button>
+{:else}
+  <div class="w-[24px] h-[24px]" />
+{/if}

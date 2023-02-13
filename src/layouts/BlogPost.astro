@@ -1,8 +1,9 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import BaseHead from "../components/BaseHead.astro";
+import ProseContainer from "@components/ProseContainer.astro";
 import Header from "../components/Header.astro";
-import Footer from "../components/Footer.astro";
+import Footer from "../components/Footer.svelte";
 import ThemeProvider from "./ThemeProvider.astro";
 import VercelAudienceAnalytics from "@components/VercelAudienceAnalytics.astro";
 import Heading from '@components/post/Heading.svelte';
@@ -28,11 +29,9 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
           pubDate={pubDate}
           updatedDate={updatedDate}
         />
-        <div
-          class="prose prose-gray dark:prose-invert prose-a:text-blue-500 hover:prose-a:text-blue-700"
-        >
+        <ProseContainer>
           <slot />
-        </div>
+        </ProseContainer>
       </article>
     </main>
     <Footer />

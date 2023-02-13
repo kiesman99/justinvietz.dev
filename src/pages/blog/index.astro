@@ -1,8 +1,6 @@
 ---
-import DefaultLayout from "@layouts/default.astro";
-import BaseHead from "@components/BaseHead.astro";
-import Header from "@components/Header.astro";
-import Footer from "@components/Footer.astro";
+import DefaultLayout from "@layouts/Default.astro";
+import PageHeading from "@components/PageHeading.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../../consts";
 import { getCollection } from "astro:content";
 
@@ -12,8 +10,9 @@ const posts = (await getCollection("blog")).sort(
 ---
 
 <DefaultLayout title={SITE_TITLE} description={SITE_DESCRIPTION}>
+	<PageHeading title="Blog" />
   <section>
-    <ul class="flex flex-col gap-4">
+    <ul class="flex flex-col gap-4 dark:text-white">
       {
         posts.map((post) => (
           <li>
