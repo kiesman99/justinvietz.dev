@@ -10,14 +10,14 @@ import Heading from '@components/post/Heading.svelte';
 
 type Props = CollectionEntry<"blog">["data"];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, draft } = Astro.props;
 ---
 
 <html lang="en">
   <head>
     <BaseHead title={title} description={description} />
     <ThemeProvider />
-	<VercelAudienceAnalytics />
+	  <VercelAudienceAnalytics />
   </head>
 
   <body class="bg-gray-100 dark:bg-gray-900">
@@ -28,6 +28,7 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
           title={title}
           pubDate={pubDate}
           updatedDate={updatedDate}
+          draft={draft}
         />
         <ProseContainer>
           <slot />
