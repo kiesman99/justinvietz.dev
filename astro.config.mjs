@@ -25,13 +25,13 @@ export default defineConfig({
   adapter: vercel({
     analytics: true
   }),
-  vite: {
-    resolve: {
-      alias: {
-        "@components/*": path.resolve("./src/components/*"),
-        "@layouts/*": path.resolve("./src/layouts/*"),
-        "@assets/*": path.resolve("./src/assets/*")
-      }
-    }
-  }
+  // vite: {
+  //   resolve: {
+  //     alias: {
+  //       "@components/*": path.resolve("./src/components/*"),
+  //       "@layouts/*": path.resolve("./src/layouts/*"),
+  //       "@assets/*": path.resolve("./src/assets/*")
+  //     }
+  //   }
+  // }
 });
