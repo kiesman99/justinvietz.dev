@@ -2,6 +2,8 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
+import path from 'path';
+
 // https://astro.build/config
 import react from "@astrojs/react";
 
@@ -22,5 +24,14 @@ export default defineConfig({
   output: "static",
   adapter: vercel({
     analytics: true
-  })
+  }),
+  vite: {
+    resolve: {
+      alias: {
+        "@components/*": path.resolve("./src/components/*"),
+        "@layouts/*": path.resolve("./src/layouts/*"),
+        "@assets/*": path.resolve("./src/assets/*")
+      }
+    }
+  }
 });
